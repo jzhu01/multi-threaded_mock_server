@@ -20,16 +20,16 @@ public class server
     extends Thread {
 
     public static void main(String args[]){
-        new server(1234);
+        new server(1234); // creating a port called 1234
     }
 
-  private void s(String s2) { //an alias to avoid typing so much!
-    System.out.println(s2);
-  }
+    private void s(String s2) { //an alias to avoid typing so much!
+      System.out.println(s2);
+    }
 
     private int port;
 
- public server(int listen_port) {
+    public server(int listen_port) {
     port = listen_port;
     ServerSocket serversocket = null;
     try {
@@ -49,6 +49,8 @@ public class server
       try {
         Socket connectionsocket = serversocket.accept();
         InetAddress client = connectionsocket.getInetAddress();
+        System.out.println("Client InetAddress is: "+client);
+        System.out.println("Client Name is: "+client.getHostName());
         s(client.getHostName() + " connected to server.\n");
         BufferedReader input =
             new BufferedReader(new InputStreamReader(connectionsocket.
