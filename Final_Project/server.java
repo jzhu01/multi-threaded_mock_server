@@ -10,6 +10,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.FileReader;
+import java.io.IOException;
 
 /**
  *
@@ -18,7 +19,27 @@ import java.io.FileReader;
 
 public class server
     extends Thread {
+      private class clientThread implements Runnable {
+          protected Socket clientSocket = null;
+        public clientThread(Socket connectionSocket){
+          this.clientSocket = connectionSocket;
+        }
 
+        public void run() {
+          try {
+            InetAddress client = clientSocket.getInetAddress();
+            s(client.getHostName() + " connected to server.\n");
+            BufferedReader input =
+                new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            DataOutputStream output =
+                new DataOutputStream(clientSocket.getOutputStream());
+            http_handler(input, output);
+          } catch (IOException e) {
+             //report exception somewhere.
+             e.printStackTrace();
+         }
+        }
+      }
     public static void main(String args[]){
         new server(1234); // creating a port called 1234
     }
@@ -46,23 +67,14 @@ public class server
       s("\nReady, Waiting for requests...\n");
       // instead of waiting, have a thread loading in, and administrative shell actions
       // administrative commands to server
+      Socket connectionSocket = null;
       try {
-        Socket connectionsocket = serversocket.accept();
-        InetAddress client = connectionsocket.getInetAddress();
-        System.out.println("Client InetAddress is: "+client);
-        System.out.println("Client Name is: "+client.getHostName());
-        s(client.getHostName() + " connected to server.\n");
-        BufferedReader input =
-            new BufferedReader(new InputStreamReader(connectionsocket.
-            getInputStream()));
-        DataOutputStream output =
-            new DataOutputStream(connectionsocket.getOutputStream());
-        http_handler(input, output);
+        connectionSocket = serversocket.accept();
       }
       catch (Exception e) {
         s("\nError:" + e.getMessage());
       }
-
+      new Thread(new clientThread(connectionSocket));
     }
   }
    private void http_handler(BufferedReader input, DataOutputStream output) {
