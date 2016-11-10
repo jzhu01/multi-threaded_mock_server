@@ -69,11 +69,15 @@ public class server
       // administrative commands to server
       Socket connectionSocket = null;
       try {
+        // how to address multiple connections trying to be accepted at the same time?
+        // how to test that server is accepting multiple connections @ same time?
         connectionSocket = serversocket.accept();
       }
       catch (Exception e) {
         s("\nError:" + e.getMessage());
       }
+      // every time we begin running the first thread, we get 2 created. issue? Exists in
+      // origina code
       new Thread(new clientThread(connectionSocket));
     }
   }
