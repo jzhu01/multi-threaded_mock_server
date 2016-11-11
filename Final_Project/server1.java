@@ -107,7 +107,7 @@ public class server1
               s("line: "+line);
           }
            output.writeUTF("requested file name :"+path);
-          output.writeUTF("hello world");
+          //output.writeUTF("hello world");
       output.close();
       output.close();
     }

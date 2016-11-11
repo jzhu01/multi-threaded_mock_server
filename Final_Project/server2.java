@@ -1,15 +1,15 @@
 
-//package javaapplication23;
+
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.io.FileReader;
 import java.io.IOException;
 
 /**
@@ -17,33 +17,32 @@ import java.io.IOException;
  * @author sadievrenseker
  */
 
-public class server
-    extends Thread {
-      private class clientThread implements Runnable {
-          protected Socket clientSocket = null;
-        public clientThread(Socket connectionSocket){
-          this.clientSocket = connectionSocket;
-          System.out.println("Thread successfully created!");
-        }
-
-        public void run() {
-          try {
-            InetAddress client = clientSocket.getInetAddress();
-            s(client.getHostName() + " connected to server.\n");
-            System.out.println("Testing!");
-            BufferedReader input =
-                new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            DataOutputStream output =
-                new DataOutputStream(clientSocket.getOutputStream());
-            http_handler(input, output);
-          } catch (IOException e) {
-             //report exception somewhere.
-             e.printStackTrace();
-         }
-        }
+public class server2 {
+    private class clientThread implements Runnable {
+        protected Socket clientSocket = null;
+      public clientThread(Socket connectionSocket){
+        this.clientSocket = connectionSocket;
+        System.out.println("Thread successfully created!");
       }
+
+      public void run() {
+        try {
+          InetAddress client = clientSocket.getInetAddress();
+          s(client.getHostName() + " connected to server.\n");
+          System.out.println("Testing!");
+          BufferedReader input =
+              new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+          DataOutputStream output =
+              new DataOutputStream(clientSocket.getOutputStream());
+          http_handler(input, output);
+        } catch (IOException e) {
+           //report exception somewhere.
+           e.printStackTrace();
+       }
+      }
+    }
     public static void main(String args[]){
-        new server(1234); // creating a port called 1234
+        new server2(1234);
     }
 
     private void s(String s2) { //an alias to avoid typing so much!
@@ -52,7 +51,7 @@ public class server
 
     private int port;
 
-    public server(int listen_port) {
+ public server2(int listen_port) {
     port = listen_port;
     ServerSocket serversocket = null;
     try {
@@ -67,19 +66,22 @@ public class server
     }
     while (true) {
       s("\nReady, Waiting for requests...\n");
-      // instead of waiting, have a thread loading in, and administrative shell actions
-      // administrative commands to server
       Socket connectionSocket = null;
       try {
-        // how to address multiple connections trying to be accepted at the same time?
-        // how to test that server is accepting multiple connections @ same time?
+        // Socket connectionsocket = serversocket.accept();
+        // InetAddress client = connectionsocket.getInetAddress();
+        // s(client.getHostName() + " connected to server.\n");
+        // BufferedReader input =
+        //     new BufferedReader(new InputStreamReader(connectionsocket.
+        //     getInputStream()));
+        // DataOutputStream output =
+        //     new DataOutputStream(connectionsocket.getOutputStream());
+        // http_handler(input, output);
         connectionSocket = serversocket.accept();
       }
       catch (Exception e) {
         s("\nError:" + e.getMessage());
       }
-      // every time we begin running the first thread, we get 2 created. issue? Exists in
-      // origina code
       new Thread(new clientThread(connectionSocket)).start();
     }
   }
@@ -94,6 +96,7 @@ public class server
       //GET /index.html HTTP/1.0
       //HEAD /index.html HTTP/1.0
       String tmp = input.readLine(); //read from the stream
+      System.out.println("read: "+tmp);
       String tmp2 = new String(tmp);
       tmp.toUpperCase(); //convert it to uppercase
       if (tmp.startsWith("GET")) { //compare it is it GET
@@ -117,25 +120,27 @@ public class server
 
 
            output.writeBytes(construct_http_header(200, 5));
-           //open file, read and load into server
+
            BufferedReader br = new BufferedReader(new FileReader(new File(path)));
+           s("openning file"+path);
            String line="";
-           while((line = br.readLine())!=null){
-              output.writeUTF(line);
-              s("line: "+line);
-          }
+           while((line=br.readLine())!=null){
+               output.writeUTF(line);
+               s("line: "+line);
+           }
            output.writeUTF("requested file name :"+path);
-          output.writeUTF("hello world");
+          //output.writeUTF("hello world");
+
       output.close();
-      output.close();
+      br.close();
     }
     catch (Exception e) {
-    /*e.printStackTrace();
-      output.writeUTF("requested file name :"+path);
-      output.writeUTF("hello world");
+        e.printStackTrace();
 
-      output.close();*/
-  }
+
+
+
+    }
 
   }
 
