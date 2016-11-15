@@ -11,36 +11,14 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.IOException;
-
+//import java.io.Random;
 /**
  *
  * @author sadievrenseker
  */
 
-public class server2 {
-    private class clientThread implements Runnable {
-        protected Socket clientSocket = null;
-      public clientThread(Socket connectionSocket){
-        this.clientSocket = connectionSocket;
-        System.out.println("Thread successfully created!");
-      }
+public class server2 extends Thread{
 
-      public void run() {
-        try {
-          InetAddress client = clientSocket.getInetAddress();
-          s(client.getHostName() + " connected to server.\n");
-          System.out.println("Testing!");
-          BufferedReader input =
-              new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-          DataOutputStream output =
-              new DataOutputStream(clientSocket.getOutputStream());
-          http_handler(input, output);
-        } catch (IOException e) {
-           //report exception somewhere.
-           e.printStackTrace();
-       }
-      }
-    }
     public static void main(String args[]){
         new server2(1234);
     }
@@ -68,21 +46,22 @@ public class server2 {
       s("\nReady, Waiting for requests...\n");
       Socket connectionSocket = null;
       try {
-        // Socket connectionsocket = serversocket.accept();
-        // InetAddress client = connectionsocket.getInetAddress();
-        // s(client.getHostName() + " connected to server.\n");
-        // BufferedReader input =
-        //     new BufferedReader(new InputStreamReader(connectionsocket.
-        //     getInputStream()));
-        // DataOutputStream output =
-        //     new DataOutputStream(connectionsocket.getOutputStream());
-        // http_handler(input, output);
         connectionSocket = serversocket.accept();
+        InetAddress client = connectionSocket.getInetAddress();
+        s(client.getHostName() + " connected to server.\n");
+        BufferedReader input =
+            new BufferedReader(new InputStreamReader(connectionSocket.
+            getInputStream()));
+        DataOutputStream output =
+            new DataOutputStream(connectionSocket.getOutputStream());
+        http_handler(input, output);
       }
       catch (Exception e) {
         s("\nError:" + e.getMessage());
       }
-      new Thread(new clientThread(connectionSocket)).start();
+      // create each new thread with a new socket number
+      //new Thread(new clientThread(connectionSocket)).start();
+      new Thread(new server2(5555));
     }
   }
    private void http_handler(BufferedReader input, DataOutputStream output) {
@@ -117,8 +96,13 @@ public class server2 {
         }
       }
       path = tmp2.substring(start + 2, end); //fill in the path
-
-
+      // Random r = new Random();
+      // int newPortNumber = r.nextInt()%10000 + 40000; // don't need to seed in Java, only in C
+      // System.out.println("new port number: "+newPortNumber);
+      //
+      // ServerSocket serverSocket2 = new ServerSocket(newPortNumber);
+      // output.writeUTF("new port number: "+newPortNumber); // sending newPortNumber to client
+      //
            output.writeBytes(construct_http_header(200, 5));
 
            BufferedReader br = new BufferedReader(new FileReader(new File(path)));

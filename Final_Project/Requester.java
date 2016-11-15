@@ -1,4 +1,4 @@
-//package javaapplication23;
+package javaapplication23;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -20,50 +20,63 @@ public class Requester{
     ObjectInputStream in;
     String message;
     Requester(){}
-    void run(){
-
-      //1. creating a socket to connect to the server
-      try {
+    void run() {
+            //1. creating a socket to connect to the server
+      try{
         requestSocket = new Socket("localhost", 1234);
         System.out.println("Connected to localhost in port 1234");
         PrintWriter out = new PrintWriter(requestSocket.getOutputStream(), true);
         BufferedReader in = new BufferedReader(new InputStreamReader(requestSocket.getInputStream()));
         Scanner stdIn = new Scanner(System.in);
-        // need to create a java file called try.html
-        String fromUser = "GET /try.html HTTP/1.1";
+
+        String fromUser ="knockknock";
+        System.out.println("connected to server, expecting new port number");
+        //out.println(fromUser);
+        String line ="some predefined msg";
+        line =in.readLine();
+        System.out.println(line);
+
+        int newportnumber = Integer.parseInt(line.substring(line.indexOf(":")+1));
+
+        requestSocket = new Socket("localhost", newportnumber);
+        System.out.println("Connected to localhost in port"+newportnumber);
+
+        out = new PrintWriter(requestSocket.getOutputStream(), true);
+        in = new BufferedReader(new InputStreamReader(requestSocket.getInputStream()));
+
+        fromUser = "GET /try.html HTTP/1.1";
         if (fromUser != null) {
-          System.out.println("Client: " + fromUser);
-          out.println(fromUser);
-        }
-        String line;
-        while((line =in.readLine())!=null){
-          System.out.println(line);
+            System.out.println("Client: " + fromUser);
+            out.println(fromUser);
         }
 
+        while((line =in.readLine())!=null){
+            System.out.println(line);
+        }
           // System.out.println("sending :GET /try.html HTTP/1.0 ");
           /*  sendMessage("GET /try.html HTTP/1.1");
              message = (String)in.readObject();
             System.out.println("server>" + message);
             message = "bye";
             sendMessage(message);*/
-        }catch(Exception e){
-            System.err.println("data received in unknown format");
-            e.printStackTrace();
+      } catch(Exception e){
+          System.err.println("data received in unknown format");
+          e.printStackTrace();
+      }
+
+    }
+
+    void sendMessage(String msg){
+        try{
+            out.writeObject(msg);
+            out.flush();
+            System.out.println("client>" + msg);
+        }
+        catch(IOException ioException){
+            ioException.printStackTrace();
         }
     }
-
-    void sendMessage(String msg) {
-      try{
-          out.writeObject(msg);
-          out.flush();
-          System.out.println("client>" + msg);
-      }
-      catch(IOException ioException){
-          ioException.printStackTrace();
-      }
-    }
-
-    public static void main(String args[]){
+    public static void main(String args[]) {
         Requester client = new Requester();
         client.run();
     }
