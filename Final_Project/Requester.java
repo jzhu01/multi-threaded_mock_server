@@ -1,4 +1,4 @@
-package javaapplication23;
+//package javaapplication23;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -29,7 +29,7 @@ public class Requester{
         BufferedReader in = new BufferedReader(new InputStreamReader(requestSocket.getInputStream()));
         Scanner stdIn = new Scanner(System.in);
 
-        String fromUser ="knockknock";
+        String fromUser;
         System.out.println("connected to server, expecting new port number");
         //out.println(fromUser);
         String line ="some predefined msg";
@@ -43,7 +43,7 @@ public class Requester{
 
         out = new PrintWriter(requestSocket.getOutputStream(), true);
         in = new BufferedReader(new InputStreamReader(requestSocket.getInputStream()));
-
+        //requestSocket.close();
         fromUser = "GET /try.html HTTP/1.1";
         if (fromUser != null) {
             System.out.println("Client: " + fromUser);
