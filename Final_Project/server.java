@@ -10,62 +10,73 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Random;
+import java.lang.Runnable;
 
 /**
  *
  * @author sadievrenseker
  */
 
-public class server extends Thread {
-
+public class server implements Runnable
+    {
+    
     public static void main(String args[]){
         new server(1234);
     }
 
-    private void s(String s2) { //an alias to avoid typing so much!
-      System.out.println(s2);
+  private void s(String s2) { //an alias to avoid typing so much!
+    System.out.println(s2);
+  }
+
+  public void run(){
+    //System.out.println("running thread");
+    //http_handler(input, output);
+  }
+
+    private int port; 
+
+ public server(int listen_port) {
+    port = listen_port;
+    ServerSocket serversocket = null; 
+    try {
+      
+      s("Trying to bind to localhost on port " + Integer.toString(port) + "...");
+      
+      serversocket = new ServerSocket(port);
     }
-
-    private int port;
-
-    public server(int listen_port) {
-      port = listen_port;
-      ServerSocket serversocket = null;
+    catch (Exception e) { //catch any errors and print errors to gui
+      s("\nFatal Error:" + e.getMessage());
+      return;
+    }
+    while (true) {
+      s("\nReady, Waiting for requests...\n");
       try {
-        s("Trying to bind to localhost on port " + Integer.toString(port) + "...");
+        Socket connectionsocket = serversocket.accept();
+        InetAddress client = connectionsocket.getInetAddress();
+        s(client.getHostName() + " connected to server.\n");
+        BufferedReader input =
+            new BufferedReader(new InputStreamReader(connectionsocket.
+            getInputStream()));
+        DataOutputStream output =
+            new DataOutputStream(connectionsocket.getOutputStream());
+           // Thread thread = new Thread( new server());
+            //thread.start();
+            Thread thread = new Thread(){
+              public void run(){
+                System.out.println("Thread Running");
+                http_handler(input, output); //this is where the thread should handle
+              }
+            };
+            thread.start();
+            
 
-        serversocket = new ServerSocket(port);
-      } catch (Exception e) { //catch any errors and print errors to gui
-        s("\nFatal Error:" + e.getMessage());
-        return;
       }
-      while (true) {
-        s("\nReady, Waiting for requests...\n");
-        try {
-
-          Socket connectionsocket = serversocket.accept();
-          InetAddress client = connectionsocket.getInetAddress();
-          s(client.getHostName() + " connected to server.\n");
-          BufferedReader input = new BufferedReader(new InputStreamReader(connectionsocket.getInputStream()));
-          DataOutputStream output = new DataOutputStream(connectionsocket.getOutputStream());
-
-          Random r= new Random();
-          int newPortNumber = r.nextInt()%10000 + 40000;
-          System.out.println("random port number : "+newPortNumber);
-
-          output.writeUTF("newportnumber:"+newPortNumber);
-          output.flush();
-          output.close();
-          System.out.println("random port sent to client"+newPortNumber);
-
-          new Thread(new server(newPortNumber));
-          http_handler(input, output);
-        } catch (Exception e) {
-          s("\nError:" + e.getMessage());
-        }
+      catch (Exception e) { 
+        s("\nError:" + e.getMessage());
       }
-    }
 
+    } 
+  }
    private void http_handler(BufferedReader input, DataOutputStream output) {
     int method = 0; //1 get, 2 head, 0 not supported
     String http = new String(); //a bunch of strings to hold
@@ -74,30 +85,37 @@ public class server extends Thread {
     String user_agent = new String(); //what user_agent
     BufferedReader input2 = null;
     try {
+     
+      Random r= new Random();
+      int newPortNumber = r.nextInt()%10000 + 40000;
+      System.out.println("random port number : "+newPortNumber);
+      
+     
+      
+      
 
-      // Random r= new Random();
-      // int newPortNumber = r.nextInt()%10000 + 40000;
-      // System.out.println("random port number : "+newPortNumber);
-      //
-      // output.writeUTF("newportnumber:"+newPortNumber);
-      // output.flush();
-      // output.close();
-      // System.out.println("random port sent to client"+newPortNumber);
-      //
-      // ServerSocket serversocket2 = new ServerSocket(newPortNumber);
-      // DataOutputStream output = null;
-      // try {
-      //   Socket connectionsocket2 = serversocket2.accept();
-      //   InetAddress client = connectionsocket2.getInetAddress();
-      //   s(client.getHostName() + " connected to server.\n");
-      //   input2= new BufferedReader(new InputStreamReader(connectionsocket2.getInputStream()));
-      //   output = new DataOutputStream(connectionsocket2.getOutputStream());
-      //   http_handler(input, output);
-      // } catch(Exception e){
-      //   e.printStackTrace();
-      // }
-
-
+      output.writeUTF("newportnumber:"+newPortNumber);
+      output.flush();
+      output.close();
+      System.out.println("random port sent to client"+newPortNumber);
+      
+       ServerSocket serversocket2 = new ServerSocket(newPortNumber);
+      DataOutputStream output2 =null;
+       try {
+        Socket connectionsocket2 = serversocket2.accept();
+        InetAddress client = connectionsocket2.getInetAddress();
+        s(client.getHostName() + " connected to server.\n");
+        input2=
+            new BufferedReader(new InputStreamReader(connectionsocket2.
+            getInputStream()));
+        output2 =
+            new DataOutputStream(connectionsocket2.getOutputStream());
+        //http_handler(input, output);
+      }catch(Exception e){
+          e.printStackTrace();
+      }
+      
+      
        //This is the two types of request we can handle
       //GET /index.html HTTP/1.0
       //HEAD /index.html HTTP/1.0
@@ -123,27 +141,31 @@ public class server extends Thread {
         }
       }
       path = tmp2.substring(start + 2, end); //fill in the path
+      
+        //outpu.writeUTF("newportnumber:");
+           output2.writeBytes(construct_http_header(200, 5));
 
-      //outpu.writeUTF("newportnumber:");
-      output.writeBytes(construct_http_header(200, 5));
-
-      BufferedReader br = new BufferedReader(new FileReader(new File(path)));
-      s("openning file"+path);
-      String line="";
-
-      while((line=br.readLine())!=null){
-         output.writeUTF(line);
-         s("line: "+line);
-      }
-
-      output.writeUTF("requested file name :"+path);
-      output.writeUTF("hello world");
-
-      output.close();
+           BufferedReader br = new BufferedReader(new FileReader(new File(path)));
+           s("openning file"+path);
+           String line="";
+           while((line=br.readLine())!=null){
+               output2.writeUTF(line);
+               s("line: "+line);
+           }
+           output2.writeUTF("requested file name :"+path);
+          output2.writeUTF("hello world");
+      
+      output2.close(); 
       br.close();
-    } catch (Exception e) {
-      e.printStackTrace();
     }
+    catch (Exception e) {
+        e.printStackTrace();
+        
+    
+      
+      
+    }
+
   }
 
   private String construct_http_header(int return_code, int file_type) {
@@ -169,8 +191,8 @@ public class server extends Thread {
         break;
     }
 
-    s = s + "\r\n";
-    s = s + "Connection: close\r\n";
+    s = s + "\r\n"; 
+    s = s + "Connection: close\r\n"; 
     s = s + "Server: SmithOperatingSystemsCourse v0\r\n"; //server name
 
     switch (file_type) {
@@ -187,8 +209,8 @@ public class server extends Thread {
         s = s + "Content-Type: text/html\r\n";
         break;
     }
-    s = s + "\r\n";
+    s = s + "\r\n"; 
     return s;
   }
 
-}
+} 
