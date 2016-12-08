@@ -22,47 +22,50 @@ public class Requester{
     Requester(){}
     void run()
     {
-      
+
             //1. creating a socket to connect to the server
               try{
             requestSocket = new Socket("localhost", 1234);
             System.out.println("Connected to localhost in port 1234");
-            
+
                   PrintWriter out = new PrintWriter(requestSocket.getOutputStream(), true);
     BufferedReader in = new BufferedReader(
         new InputStreamReader(requestSocket.getInputStream()));
     Scanner stdIn = new Scanner(System.in);
-    
+
     String fromUser ="knockknock";
     System.out.println("connected to server, expecting new port number");
     //out.println(fromUser);
     String line ="some predefined msg";
    line =in.readLine();
         System.out.println(line);
-    
-   
+
+
     int newportnumber = Integer.parseInt(line.substring(line.indexOf(":")+1));
-    
-    
+
+
     requestSocket = new Socket("localhost", newportnumber);
             System.out.println("Connected to localhost in port"+newportnumber);
-            
+
      out = new PrintWriter(requestSocket.getOutputStream(), true);
     in = new BufferedReader(
         new InputStreamReader(requestSocket.getInputStream()));
-    
-    
-    
-    fromUser = "GET /try.html HTTP/1.1";
+
+
+    System.out.println("Please enter a command, resource to access, and your protocol: ");
+    System.out.println("Example: GET /try.html HTTP/1.1");
+    //  GET /alpacafarm.html HTTP/1.1
+    fromUser = stdIn.nextLine();
+    //fromUser = "GET /try.html HTTP/1.1";
     if (fromUser != null) {
         System.out.println("Client: " + fromUser);
         out.println(fromUser);
     }
-  
+
     while((line =in.readLine())!=null){
         System.out.println(line);
     }
-    
+
                   // System.out.println("sending :GET /try.html HTTP/1.0 ");
                   /*  sendMessage("GET /try.html HTTP/1.1");
                      message = (String)in.readObject();
@@ -74,10 +77,10 @@ public class Requester{
                     System.err.println("data received in unknown format");
                     e.printStackTrace();
                 }
-           
-        
-     
-       
+
+
+
+
     }
     void sendMessage(String msg)
     {

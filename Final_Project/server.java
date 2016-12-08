@@ -11,18 +11,23 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Random;
 import java.lang.Runnable;
+import java.util.concurrent.Semaphore;
 
 /**
  *
  * @author sadievrenseker
  */
 
-public class server implements Runnable
-    {
-    
-    public static void main(String args[]){
-        new server(1234);
-    }
+public class server implements Runnable {
+  // protected boolean isStopped = false;
+  // protected Thread runningThread = null;
+  private int port;
+  private Semaphore file1Access = new Semaphore(1);
+  private Semaphore file2Access = new Semaphore(1);
+
+  public static void main(String args[]){
+    new server(1234);
+  }
 
   private void s(String s2) { //an alias to avoid typing so much!
     System.out.println(s2);
@@ -33,20 +38,17 @@ public class server implements Runnable
     //http_handler(input, output);
   }
 
-    private int port; 
-
- public server(int listen_port) {
+  public server(int listen_port) {
     port = listen_port;
-    ServerSocket serversocket = null; 
+    ServerSocket serversocket = null;
     try {
-      
+
       s("Trying to bind to localhost on port " + Integer.toString(port) + "...");
-      
       serversocket = new ServerSocket(port);
-    }
-    catch (Exception e) { //catch any errors and print errors to gui
-      s("\nFatal Error:" + e.getMessage());
-      return;
+
+    } catch (Exception e) { //catch any errors and print errors to gui
+        s("\nFatal Error:" + e.getMessage());
+        return;
     }
     while (true) {
       s("\nReady, Waiting for requests...\n");
@@ -68,15 +70,12 @@ public class server implements Runnable
               }
             };
             thread.start();
-            
-
+      } catch (Exception e) {
+          s("\nError:" + e.getMessage());
       }
-      catch (Exception e) { 
-        s("\nError:" + e.getMessage());
-      }
-
-    } 
+    }
   }
+
    private void http_handler(BufferedReader input, DataOutputStream output) {
     int method = 0; //1 get, 2 head, 0 not supported
     String http = new String(); //a bunch of strings to hold
@@ -85,20 +84,16 @@ public class server implements Runnable
     String user_agent = new String(); //what user_agent
     BufferedReader input2 = null;
     try {
-     
+
       Random r= new Random();
       int newPortNumber = r.nextInt()%10000 + 40000;
       System.out.println("random port number : "+newPortNumber);
-      
-     
-      
-      
 
       output.writeUTF("newportnumber:"+newPortNumber);
       output.flush();
       output.close();
       System.out.println("random port sent to client"+newPortNumber);
-      
+
        ServerSocket serversocket2 = new ServerSocket(newPortNumber);
       DataOutputStream output2 =null;
        try {
@@ -114,8 +109,8 @@ public class server implements Runnable
       }catch(Exception e){
           e.printStackTrace();
       }
-      
-      
+
+
        //This is the two types of request we can handle
       //GET /index.html HTTP/1.0
       //HEAD /index.html HTTP/1.0
@@ -140,30 +135,66 @@ public class server implements Runnable
           start = a;
         }
       }
-      path = tmp2.substring(start + 2, end); //fill in the path
-      
-        //outpu.writeUTF("newportnumber:");
-           output2.writeBytes(construct_http_header(200, 5));
+       path = tmp2.substring(start + 2, end); //fill in the path
+       System.out.println("Path is: "+path);
+       System.out.println();
+       //System.out.println(path.equalsIgnoreCase("try.html"));
+       //outpu.writeUTF("newportnumber:");
+       if (path.equalsIgnoreCase("try.html")){
+          System.out.println();
+          //System.out.println(file1Access.tryAcquire());
+          file1Access.acquire();
+          output2.writeBytes(construct_http_header(200, 5));
 
-           BufferedReader br = new BufferedReader(new FileReader(new File(path)));
-           s("openning file"+path);
-           String line="";
-           while((line=br.readLine())!=null){
-               output2.writeUTF(line);
-               s("line: "+line);
-           }
-           output2.writeUTF("requested file name :"+path);
-          output2.writeUTF("hello world");
-      
-      output2.close(); 
+          BufferedReader br = new BufferedReader(new FileReader(new File(path)));
+          s("openning file"+path);
+          String line="";
+          while((line=br.readLine())!=null){
+              output2.writeUTF(line);
+              s("line: "+line);
+          }
+          Thread.sleep(10000);
+          System.out.println("");
+          System.out.println("Waiting...");
+          Thread.sleep(10000);
+          System.out.println("Thread finished. Closing out.");
+         //output2.writeUTF("requested file name :"+path);
+         //output2.writeUTF("hello world");
+         output2.close();
+         br.close();
+         file1Access.release();
+       } else {
+         System.out.println();
+         System.out.println("trying to access file 2 semaphore:" + file2Access.tryAcquire(1000));
+         System.out.println();
+      file2Access.acquire();
+      output2.writeBytes(construct_http_header(200, 5));
+
+      BufferedReader br = new BufferedReader(new FileReader(new File(path)));
+      s("openning file"+path);
+      String line="";
+      while((line=br.readLine())!=null){
+         output2.writeUTF(line);
+         s("line: "+line);
+      }
+      Thread.sleep(10000);
+      System.out.println("");
+      System.out.println("Waiting...");
+      Thread.sleep(10000);
+      System.out.println("Thread finished. Closing out.");
+      //output2.writeUTF("requested file name :"+path);
+      //output2.writeUTF("hello world");
+      output2.close();
       br.close();
+      file2Access.release();
+    }
     }
     catch (Exception e) {
         e.printStackTrace();
-        
-    
-      
-      
+
+
+
+
     }
 
   }
@@ -191,8 +222,8 @@ public class server implements Runnable
         break;
     }
 
-    s = s + "\r\n"; 
-    s = s + "Connection: close\r\n"; 
+    s = s + "\r\n";
+    s = s + "Connection: close\r\n";
     s = s + "Server: SmithOperatingSystemsCourse v0\r\n"; //server name
 
     switch (file_type) {
@@ -209,8 +240,8 @@ public class server implements Runnable
         s = s + "Content-Type: text/html\r\n";
         break;
     }
-    s = s + "\r\n"; 
+    s = s + "\r\n";
     return s;
   }
 
-} 
+}
