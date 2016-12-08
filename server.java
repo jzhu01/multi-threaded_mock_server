@@ -1,4 +1,9 @@
-
+//Now consider both clients are trying to read the same file and you can allow only 1
+//access at a time. Provide a synchronization for such a case
+// A critical section is a section of code that is executed by multiple threads and where the sequence of execution for the 
+//threads makes a difference in the result of the concurrent execution of the critical section.
+//To prevent race conditions from occurring you must make sure that the critical section is executed as an atomic instruction. That means that once a single thread is executing it, 
+//no other threads can execute it until the first thread has left the critical section.
 
 
 import java.io.BufferedReader;
@@ -11,6 +16,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Random;
 import java.lang.Runnable;
+import java.util.concurrent.Semaphore;
+import java.util.ArrayList;
 
 /**
  *
@@ -33,7 +40,8 @@ public class server implements Runnable
     //http_handler(input, output);
   }
 
-    private int port; 
+    private int port;
+    ArrayList<SharedFile> files = new ArrayList<SharedFile>();
 
  public server(int listen_port) {
     port = listen_port;
@@ -125,6 +133,7 @@ public class server implements Runnable
       tmp.toUpperCase(); //convert it to uppercase
       if (tmp.startsWith("GET")) { //compare it is it GET
         method = 1;
+        System.out.println("method1");
       } //if we set it to method 1
       if (tmp.startsWith("HEAD")) { //same here is it HEAD
         method = 2;
@@ -140,23 +149,36 @@ public class server implements Runnable
           start = a;
         }
       }
-      path = tmp2.substring(start + 2, end); //fill in the path
-      
-        //outpu.writeUTF("newportnumber:");
-           output2.writeBytes(construct_http_header(200, 5));
+      path = tmp2.substring(start+2, end); //fill in the path
+      System.out.println("path: " + path);
+      SharedFile needed = null;
 
-           BufferedReader br = new BufferedReader(new FileReader(new File(path)));
-           s("openning file"+path);
-           String line="";
-           while((line=br.readLine())!=null){
-               output2.writeUTF(line);
-               s("line: "+line);
-           }
-           output2.writeUTF("requested file name :"+path);
-          output2.writeUTF("hello world");
-      
-      output2.close(); 
-      br.close();
+      System.out.println(files.size());
+
+      if(files.size() > 0){
+      for(int i = 0; i < files.size(); i++){
+          if(files.get(i).getPathName().equals(path)){
+            needed = files.get(i);
+
+            break;
+          }
+          else if(i == files.size()-1){
+            needed = new SharedFile(new File(path));
+            files.add(needed);
+          }
+
+        }
+    }
+    else{
+      needed = new SharedFile(new File(path));
+      files.add(needed);
+        }
+      needed.process(this, output2);
+
+        //outpu.writeUTF("newportnumber:");
+
+          
+
     }
     catch (Exception e) {
         e.printStackTrace();
@@ -211,6 +233,31 @@ public class server implements Runnable
     }
     s = s + "\r\n"; 
     return s;
+  }
+
+  public void accessFile(File path, DataOutputStream output2){
+    try{
+      output2.writeBytes(construct_http_header(200, 5));
+
+      BufferedReader br = new BufferedReader(new FileReader(path));
+      s("openning file"+path);
+           String line="";
+           while((line=br.readLine())!=null){
+               output2.writeUTF(line);
+               s("line: "+line);
+           }
+      output2.writeUTF("requested file name :"+path);
+      output2.writeUTF("hello world");
+      Thread.sleep(10000);
+      output2.close(); 
+      br.close();
+      s("closing file " + path.getName());
+    }
+        catch (Exception e) {
+        e.printStackTrace();
+      
+    }
+
   }
 
 } 

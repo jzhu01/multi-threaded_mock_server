@@ -51,9 +51,12 @@ public class Requester{
     in = new BufferedReader(
         new InputStreamReader(requestSocket.getInputStream()));
     
-    
-    
-    fromUser = "GET /try.html HTTP/1.1";
+    System.out.println("Please type in your file name.");
+    System.out.print(">>>");
+    fromUser = stdIn.nextLine();
+    fromUser = "GET /" + fromUser + " HTTP/1.1";
+
+    //fromUser = "GET /try2.html HTTP/1.1";
     if (fromUser != null) {
         System.out.println("Client: " + fromUser);
         out.println(fromUser);
