@@ -21,7 +21,7 @@ import java.util.ArrayList;
 
 /**
  *
- * @author sadievrenseker
+ * @author sadievrenseker, sabrina sayasith, jen zhu
  */
 
 public class server implements Runnable
