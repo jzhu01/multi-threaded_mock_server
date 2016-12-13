@@ -4,15 +4,17 @@ import java.util.Date;
 import java.util.Random;
 /*
  * Operating Systems Final Project
- * @author: Jen Zhu, Sabrina Sayasith
+ * @author Sadi Evren Seker, Jen Zhu, Sabrina Sayasith
  * Due Date: 12/15/16
  *
  */
-// import filesystem;
+
 /** Class for Command Line Interface */
 class cli extends Thread{
     server adminThread;
-    public cli(){}
+    public cli(server s1){
+      this.adminThread = s1;
+    }
     public void run(){
         System.out.println("Welcome to our command line interface:");
         while(true){
@@ -23,12 +25,13 @@ class cli extends Thread{
             StringTokenizer st = new StringTokenizer(commandLine);
 
                 String command = st.nextToken();
-                System.out.println("command :"+command);
+                System.out.println("command: "+command);
 
                 // starting up the server
                 if(command.equals("start")){
                     // create a new server thread to act as admin
-                    adminThread = new server(1234);
+                    adminThread.start();
+                    System.out.println("Is this working?");
                     // code to start the server
                 } // closing out of the if
                 if(command.equals("shutdown")){
@@ -39,7 +42,8 @@ class cli extends Thread{
         }
     }
     public static void main(String[] args){
-      cli c1 = new cli();
-      c1.start();
+      server firstServer = new server(1234);
+      cli c1 = new cli(firstServer);
+      c1.run();
     }
 }

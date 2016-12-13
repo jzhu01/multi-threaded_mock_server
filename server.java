@@ -1,10 +1,3 @@
-//Now consider both clients are trying to read the same file and you can allow only 1
-//access at a time. Provide a synchronization for such a case
-// A critical section is a section of code that is executed by multiple threads and where the sequence of execution for the
-//threads makes a difference in the result of the concurrent execution of the critical section.
-//To prevent race conditions from occurring you must make sure that the critical section is executed as an atomic instruction. That means that once a single thread is executing it,
-//no other threads can execute it until the first thread has left the critical section.
-
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -20,176 +13,149 @@ import java.util.concurrent.Semaphore;
 import java.util.ArrayList;
 
 /**
- *
- * @author sadievrenseker, sabrina sayasith, jen zhu
+ * Operating Systems Final Project
+ * @author Sadi Evren Seker, Sabrina Sayasith, Jen Zhu
+ * Due: 12/15/16
  */
 
-public class server implements Runnable
-    {
+public class server implements Runnable {
 
     public static void main(String args[]){
-        new server(1234);
+        server s1 = new server(1234);
+        s1.run();
     }
 
-  private void s(String s2) { //an alias to avoid typing so much!
-    System.out.println(s2);
-  }
+    private void s(String s2) { //an alias to avoid typing so much!
+      System.out.println(s2);
+    }
 
-  public void run(){
-    //System.out.println("running thread");
-    //http_handler(input, output);
-  }
+    public void run(){
+      ServerSocket serversocket = null;
+      try {
+        s("Trying to bind to localhost on port " + Integer.toString(this.port) + "...");
+        serversocket = new ServerSocket(this.port);
+      } catch (Exception e) { //catch any errors and print errors to gui
+        s("\nFatal Error:" + e.getMessage());
+        return;
+      }
+      while (true) {
+        s("\nReady, Waiting for requests...\n");
+        try {
+          Socket connectionsocket = serversocket.accept();
+          InetAddress client = connectionsocket.getInetAddress();
+          s(client.getHostName() + " connected to server.\n");
+          BufferedReader input =
+              new BufferedReader(new InputStreamReader(connectionsocket.
+              getInputStream()));
+          DataOutputStream output =
+              new DataOutputStream(connectionsocket.getOutputStream());
+             // Thread thread = new Thread( new server());
+              //thread.start();
+              Thread thread = new Thread(){
+                public void run(){
+                  System.out.println("Thread Running");
+                  http_handler(input, output); //this is where the thread should handle
+                }
+              };
+              thread.start();
+          } catch (Exception e) {
+          s("\nError:" + e.getMessage());
+          }
+        }
+      }
 
     private int port;
     ArrayList<SharedFile> files = new ArrayList<SharedFile>();
 
- public server(int listen_port) {
-    port = listen_port;
-    ServerSocket serversocket = null;
-    try {
-
-      s("Trying to bind to localhost on port " + Integer.toString(port) + "...");
-
-      serversocket = new ServerSocket(port);
+    public server(int listen_port) {
+      this.port = listen_port;
     }
-    catch (Exception e) { //catch any errors and print errors to gui
-      s("\nFatal Error:" + e.getMessage());
-      return;
-    }
-    while (true) {
-      s("\nReady, Waiting for requests...\n");
+
+    /** Method to handle HTTP requests */
+    private void http_handler(BufferedReader input, DataOutputStream output) {
+      int method = 0; //1 get, 2 head, 0 not supported
+      String http = new String(); //a bunch of strings to hold
+      String path = new String(); //the various things, what http v, what path,
+      String file = new String(); //what file
+      String user_agent = new String(); //what user_agent
+      BufferedReader input2 = null;
       try {
-        Socket connectionsocket = serversocket.accept();
-        InetAddress client = connectionsocket.getInetAddress();
-        s(client.getHostName() + " connected to server.\n");
-        BufferedReader input =
-            new BufferedReader(new InputStreamReader(connectionsocket.
-            getInputStream()));
-        DataOutputStream output =
-            new DataOutputStream(connectionsocket.getOutputStream());
-           // Thread thread = new Thread( new server());
-            //thread.start();
-            Thread thread = new Thread(){
-              public void run(){
-                System.out.println("Thread Running");
-                http_handler(input, output); //this is where the thread should handle
-              }
-            };
-            thread.start();
-
-
-      }
-      catch (Exception e) {
-        s("\nError:" + e.getMessage());
-      }
-
-    }
-  }
-   private void http_handler(BufferedReader input, DataOutputStream output) {
-    int method = 0; //1 get, 2 head, 0 not supported
-    String http = new String(); //a bunch of strings to hold
-    String path = new String(); //the various things, what http v, what path,
-    String file = new String(); //what file
-    String user_agent = new String(); //what user_agent
-    BufferedReader input2 = null;
-    try {
-
-      Random r= new Random();
-      int newPortNumber = r.nextInt()%10000 + 40000;
-      System.out.println("random port number : "+newPortNumber);
-
-
-
-
-
-      output.writeUTF("newportnumber:"+newPortNumber);
-      output.flush();
-      output.close();
-      System.out.println("random port sent to client"+newPortNumber);
-
-       ServerSocket serversocket2 = new ServerSocket(newPortNumber);
-      DataOutputStream output2 =null;
-       try {
-        Socket connectionsocket2 = serversocket2.accept();
-        InetAddress client = connectionsocket2.getInetAddress();
-        s(client.getHostName() + " connected to server.\n");
-        input2=
-            new BufferedReader(new InputStreamReader(connectionsocket2.
-            getInputStream()));
-        output2 =
-            new DataOutputStream(connectionsocket2.getOutputStream());
+        Random r= new Random();
+        int newPortNumber = r.nextInt()%10000 + 40000;
+        System.out.println("random port number: "+newPortNumber);
+        output.writeUTF("newportnumber: "+newPortNumber);
+        output.flush();
+        output.close();
+        System.out.println("random port sent to client: "+newPortNumber);
+        ServerSocket serversocket2 = new ServerSocket(newPortNumber);
+        DataOutputStream output2 =null;
+        try {
+          Socket connectionsocket2 = serversocket2.accept();
+          InetAddress client = connectionsocket2.getInetAddress();
+          s(client.getHostName() + " connected to server.\n");
+          input2 = new BufferedReader(new InputStreamReader(connectionsocket2.getInputStream()));
+          output2 = new DataOutputStream(connectionsocket2.getOutputStream());
         //http_handler(input, output);
-      }catch(Exception e){
-          e.printStackTrace();
-      }
-
-
-       //This is the two types of request we can handle
-      //GET /index.html HTTP/1.0
-      //HEAD /index.html HTTP/1.0
-      String tmp = input2.readLine(); //read from the stream
-      System.out.println("read: "+tmp);
-      String tmp2 = new String(tmp);
-      tmp.toUpperCase(); //convert it to uppercase
-      if (tmp.startsWith("GET")) { //compare it is it GET
-        method = 1;
-        System.out.println("method1");
-      } //if we set it to method 1
-      if (tmp.startsWith("HEAD")) { //same here is it HEAD
-        method = 2;
-      } //set method to 2
-      int start = 0;
-      int end = 0;
-      for (int a = 0; a < tmp2.length(); a++) {
-        if (tmp2.charAt(a) == ' ' && start != 0) {
-          end = a;
-          break;
+        } catch(Exception e){
+            e.printStackTrace();
         }
-        if (tmp2.charAt(a) == ' ' && start == 0) {
-          start = a;
-        }
-      }
-      path = tmp2.substring(start+2, end); //fill in the path
-      System.out.println("path: " + path);
-      SharedFile needed = null;
 
-      System.out.println(files.size());
-
-      if(files.size() > 0){
-      for(int i = 0; i < files.size(); i++){
-          if(files.get(i).getPathName().equals(path)){
-            needed = files.get(i);
-
+        //This is the two types of request we can handle
+        //GET /index.html HTTP/1.0
+        //HEAD /index.html HTTP/1.0
+        String tmp = input2.readLine(); //read from the stream
+        System.out.println("read: "+tmp);
+        String tmp2 = new String(tmp);
+        tmp.toUpperCase(); //convert it to uppercase
+        if (tmp.startsWith("GET")) { //compare it is it GET
+          method = 1;
+          System.out.println("method1");
+        } //if we set it to method 1
+        if (tmp.startsWith("HEAD")) { //same here is it HEAD
+          method = 2;
+        } //set method to 2
+        int start = 0;
+        int end = 0;
+        for (int a = 0; a < tmp2.length(); a++) {
+          if (tmp2.charAt(a) == ' ' && start != 0) {
+            end = a;
             break;
           }
-          else if(i == files.size()-1){
-            needed = new SharedFile(new File(path));
-            files.add(needed);
+          if (tmp2.charAt(a) == ' ' && start == 0) {
+            start = a;
           }
-
         }
-    }
-    else{
-      needed = new SharedFile(new File(path));
-      files.add(needed);
-        }
-      needed.process(this, output2);
 
+        // code to synchronize the file access
+        path = tmp2.substring(start+2, end); //fill in the path
+        System.out.println("path: " + path);
+        SharedFile needed = null;
+
+        System.out.println(files.size());
+
+        if(files.size() > 0){                              // Case 1: If there are files in the SharedFile arrayList
+          for(int i = 0; i < files.size(); i++){           // loop through file using i
+              if(files.get(i).getPathName().equals(path)){ // if the path is equal to the path requested
+                needed = files.get(i);                     // set needed (SharedFile) to be the file i
+
+                break;                                     // exit the for loop
+              } else if(i == files.size()-1){              // Case 1.5: Reach the end of the files arrayList and the requested file was not found (not added yet)
+                needed = new SharedFile(new File(path));   // create a new SharedFile
+                files.add(needed);                         // add the new SharedFile to our list of all the files
+              }
+            }
+        } else {                                           // Case 2: Ther are no files in the SharedFile arrayList
+          needed = new SharedFile(new File(path));         // create a new SharedFile
+          files.add(needed);                               // add the new SharedFile to our list of all the files
+        }
+        needed.process(this, output2);                     // call the process function from SharedFile;
         //outpu.writeUTF("newportnumber:");
-
-
-
-    }
-    catch (Exception e) {
-        e.printStackTrace();
-
-
-
-
-    }
-
+      } catch (Exception e) {
+          e.printStackTrace();
+      }
   }
 
+  /** Method to mimic reply HTTP response */
   private String construct_http_header(int return_code, int file_type) {
     String s = "HTTP/1.0 ";
     switch (return_code) {
@@ -235,29 +201,26 @@ public class server implements Runnable
     return s;
   }
 
+  /** Method to synchronize file access */
   public void accessFile(File path, DataOutputStream output2){
-    try{
-      output2.writeBytes(construct_http_header(200, 5));
+    try {
+      output2.writeBytes(construct_http_header(200, 5));            // write a mock HTTP header
 
-      BufferedReader br = new BufferedReader(new FileReader(path));
-      s("openning file"+path);
-           String line="";
-           while((line=br.readLine())!=null){
-               output2.writeUTF(line);
-               s("line: "+line);
-           }
+      BufferedReader br = new BufferedReader(new FileReader(path)); // new bufferedReader to read the file named path
+      s("openning file "+path);                                     // print out now opening file
+      String line="";
+      while((line=br.readLine())!=null){                            // print out each line
+        output2.writeUTF(line);
+        s("line: "+line);
+      }
       output2.writeUTF("\nrequested file name :"+path);
       //output2.writeUTF("hello world");
-      Thread.sleep(10000);
+      Thread.sleep(10000);                                          // had the thread sleep to test synchronization
       output2.close();
       br.close();
       s("closing file " + path.getName());
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-        catch (Exception e) {
-        e.printStackTrace();
-
-    }
-
   }
-
 }
