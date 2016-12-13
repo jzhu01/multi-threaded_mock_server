@@ -1,8 +1,8 @@
 //Now consider both clients are trying to read the same file and you can allow only 1
 //access at a time. Provide a synchronization for such a case
-// A critical section is a section of code that is executed by multiple threads and where the sequence of execution for the 
+// A critical section is a section of code that is executed by multiple threads and where the sequence of execution for the
 //threads makes a difference in the result of the concurrent execution of the critical section.
-//To prevent race conditions from occurring you must make sure that the critical section is executed as an atomic instruction. That means that once a single thread is executing it, 
+//To prevent race conditions from occurring you must make sure that the critical section is executed as an atomic instruction. That means that once a single thread is executing it,
 //no other threads can execute it until the first thread has left the critical section.
 
 
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 
 public class server implements Runnable
     {
-    
+
     public static void main(String args[]){
         new server(1234);
     }
@@ -45,11 +45,11 @@ public class server implements Runnable
 
  public server(int listen_port) {
     port = listen_port;
-    ServerSocket serversocket = null; 
+    ServerSocket serversocket = null;
     try {
-      
+
       s("Trying to bind to localhost on port " + Integer.toString(port) + "...");
-      
+
       serversocket = new ServerSocket(port);
     }
     catch (Exception e) { //catch any errors and print errors to gui
@@ -76,14 +76,14 @@ public class server implements Runnable
               }
             };
             thread.start();
-            
+
 
       }
-      catch (Exception e) { 
+      catch (Exception e) {
         s("\nError:" + e.getMessage());
       }
 
-    } 
+    }
   }
    private void http_handler(BufferedReader input, DataOutputStream output) {
     int method = 0; //1 get, 2 head, 0 not supported
@@ -93,20 +93,20 @@ public class server implements Runnable
     String user_agent = new String(); //what user_agent
     BufferedReader input2 = null;
     try {
-     
+
       Random r= new Random();
       int newPortNumber = r.nextInt()%10000 + 40000;
       System.out.println("random port number : "+newPortNumber);
-      
-     
-      
-      
+
+
+
+
 
       output.writeUTF("newportnumber:"+newPortNumber);
       output.flush();
       output.close();
       System.out.println("random port sent to client"+newPortNumber);
-      
+
        ServerSocket serversocket2 = new ServerSocket(newPortNumber);
       DataOutputStream output2 =null;
        try {
@@ -122,8 +122,8 @@ public class server implements Runnable
       }catch(Exception e){
           e.printStackTrace();
       }
-      
-      
+
+
        //This is the two types of request we can handle
       //GET /index.html HTTP/1.0
       //HEAD /index.html HTTP/1.0
@@ -177,15 +177,15 @@ public class server implements Runnable
 
         //outpu.writeUTF("newportnumber:");
 
-          
+
 
     }
     catch (Exception e) {
         e.printStackTrace();
-        
-    
-      
-      
+
+
+
+
     }
 
   }
@@ -213,8 +213,8 @@ public class server implements Runnable
         break;
     }
 
-    s = s + "\r\n"; 
-    s = s + "Connection: close\r\n"; 
+    s = s + "\r\n";
+    s = s + "Connection: close\r\n";
     s = s + "Server: SmithOperatingSystemsCourse v0\r\n"; //server name
 
     switch (file_type) {
@@ -231,7 +231,7 @@ public class server implements Runnable
         s = s + "Content-Type: text/html\r\n";
         break;
     }
-    s = s + "\r\n"; 
+    s = s + "\r\n";
     return s;
   }
 
@@ -246,18 +246,18 @@ public class server implements Runnable
                output2.writeUTF(line);
                s("line: "+line);
            }
-      output2.writeUTF("requested file name :"+path);
-      output2.writeUTF("hello world");
+      output2.writeUTF("\nrequested file name :"+path);
+      //output2.writeUTF("hello world");
       Thread.sleep(10000);
-      output2.close(); 
+      output2.close();
       br.close();
       s("closing file " + path.getName());
     }
         catch (Exception e) {
         e.printStackTrace();
-      
+
     }
 
   }
 
-} 
+}

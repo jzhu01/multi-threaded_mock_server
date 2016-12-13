@@ -1,4 +1,4 @@
- import java.io.BufferedReader;
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileReader;
@@ -26,6 +26,6 @@ import java.io.IOException;
       }
 
       public String getPathName(){
-         return this.path.getName(); //method to get path and check it 
+         return this.path.getName(); //method to get path and check it
       }
  }
