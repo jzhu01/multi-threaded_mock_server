@@ -11,9 +11,11 @@ import java.util.Random;
 
 /** Class for Command Line Interface */
 class cli extends Thread{
-    server adminThread;
+    server server;
+    Thread adminThread;
     public cli(server s1){
-      this.adminThread = s1;
+      this.server = s1;
+      this.adminThread = null;
     }
     public void run(){
         System.out.println("Welcome to our command line interface:");
@@ -28,22 +30,23 @@ class cli extends Thread{
                 System.out.println("command: "+command);
 
                 // starting up the server
-                if(command.equals("start")){
-                    // create a new server thread to act as admin
+                if (command.equals("start")){
+                    server = new server(1234);
+                    this.adminThread = (new Thread(new server(1234)));
                     adminThread.start();
-                    System.out.println("Is this working?");
-                    // code to start the server
+                    //System.out.println("Is this working?");
                 } // closing out of the if
                 if(command.equals("shutdown")){
                   // code to close the server and all running threads
                   System.out.println("Preparing to shutdown...");
+                  server.closeThreads();
+                  adminThread.interrupt();
                 }
-                //
         }
     }
     public static void main(String[] args){
-      server firstServer = new server(1234);
-      cli c1 = new cli(firstServer);
+      server s1 = new server(1234);
+      cli c1 = new cli(s1);
       c1.run();
     }
 }

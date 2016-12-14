@@ -19,6 +19,9 @@ import java.util.ArrayList;
  */
 
 public class server implements Runnable {
+    private int port;
+    ArrayList<SharedFile> files = new ArrayList<SharedFile>();
+    ArrayList<Thread> serverThreads = new ArrayList<Thread>();
 
     public static void main(String args[]){
         server s1 = new server(1234);
@@ -30,6 +33,7 @@ public class server implements Runnable {
     }
 
     public void run(){
+
       ServerSocket serversocket = null;
       try {
         s("Trying to bind to localhost on port " + Integer.toString(this.port) + "...");
@@ -49,8 +53,6 @@ public class server implements Runnable {
               getInputStream()));
           DataOutputStream output =
               new DataOutputStream(connectionsocket.getOutputStream());
-             // Thread thread = new Thread( new server());
-              //thread.start();
               Thread thread = new Thread(){
                 public void run(){
                   System.out.println("Thread Running");
@@ -58,14 +60,12 @@ public class server implements Runnable {
                 }
               };
               thread.start();
+              serverThreads.add(thread);  // add to list of server threads for deletion later on in case of shutdown
           } catch (Exception e) {
           s("\nError:" + e.getMessage());
           }
         }
       }
-
-    private int port;
-    ArrayList<SharedFile> files = new ArrayList<SharedFile>();
 
     public server(int listen_port) {
       this.port = listen_port;
@@ -223,4 +223,17 @@ public class server implements Runnable {
       e.printStackTrace();
     }
   }
+  /** Method to close out of all active server threads */
+  public void closeThreads(){
+    //try {
+      for (Thread t: serverThreads){
+        t.interrupt();
+      }
+      Thread.currentThread().interrupt();
+      return;
+    //} catch (InterruptedException e){
+      // handle error here
+    //}
+  }
+
 }
