@@ -42,6 +42,10 @@ class cli extends Thread{
                   server.closeThreads();
                   adminThread.interrupt();
                 }
+                if(command.equals("ls")){
+                  System.out.println("Some Thread Info:");
+                  server.listThreads();
+                }
         }
     }
     public static void main(String[] args){

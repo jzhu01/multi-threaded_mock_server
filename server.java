@@ -11,6 +11,8 @@ import java.util.Random;
 import java.lang.Runnable;
 import java.util.concurrent.Semaphore;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Collections;
 
 /**
  * Operating Systems Final Project
@@ -21,7 +23,8 @@ import java.util.ArrayList;
 public class server implements Runnable {
     private int port;
     ArrayList<SharedFile> files = new ArrayList<SharedFile>();
-    ArrayList<Thread> serverThreads = new ArrayList<Thread>();
+    List<Thread> serverThreads = Collections.synchronizedList(new ArrayList<Thread>());
+    //List<Thread> serverThreads = new ArrayList<Thread>();
 
     public static void main(String args[]){
         server s1 = new server(1234);
@@ -61,6 +64,7 @@ public class server implements Runnable {
               };
               thread.start();
               serverThreads.add(thread);  // add to list of server threads for deletion later on in case of shutdown
+              System.out.println("Number of threads: "+serverThreads.size());
           } catch (Exception e) {
           s("\nError:" + e.getMessage());
           }
@@ -235,5 +239,26 @@ public class server implements Runnable {
       // handle error here
     //}
   }
+
+  /** Method to list all active server threads */
+  public void listThreads(){
+    System.out.println("Got into the listThreads method! ");
+    // for (Thread t: serverThreads) {
+    //   System.out.println("Thread looped!");
+    //   System.out.println("Thread: "+t.getName());
+    // }
+    System.out.println("Number of threads: "+serverThreads.size());
+    if (serverThreads.size() > 0){
+      for (int i = 0; i < serverThreads.size(); i++){
+        System.out.println(serverThreads.get(i));
+      }
+    }
+  }
+
+  // Problems:
+  // Server threads are not being added to the arrayList
+  // --> when trying to loop through to print them out, unable to
+  // --> when trying to end the threads by looping, unable to
+  // May need to provide some sort of handling mechanism for interrupts
 
 }
