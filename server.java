@@ -13,6 +13,7 @@ import java.util.concurrent.Semaphore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
+import java.io.IOException;
 
 /**
  * Operating Systems Final Project
@@ -25,6 +26,8 @@ public class server implements Runnable {
     ArrayList<SharedFile> files = new ArrayList<SharedFile>();
     List<Thread> serverThreads = Collections.synchronizedList(new ArrayList<Thread>());
     //List<Thread> serverThreads = new ArrayList<Thread>();
+    private volatile boolean running = true;
+    public ServerSocket serversocket = null;
 
     public static void main(String args[]){
         server s1 = new server(1234);
@@ -36,19 +39,19 @@ public class server implements Runnable {
     }
 
     public void run(){
-
-      ServerSocket serversocket = null;
+      //ServerSocket serversocket = null;
       try {
         s("Trying to bind to localhost on port " + Integer.toString(this.port) + "...");
-        serversocket = new ServerSocket(this.port);
+        this.serversocket = new ServerSocket(this.port);
+        running = true;
       } catch (Exception e) { //catch any errors and print errors to gui
         s("\nFatal Error:" + e.getMessage());
         return;
       }
-      while (true) {
+      while (running) {
         s("\nReady, Waiting for requests...\n");
         try {
-          Socket connectionsocket = serversocket.accept();
+          Socket connectionsocket = this.serversocket.accept();
           InetAddress client = connectionsocket.getInetAddress();
           s(client.getHostName() + " connected to server.\n");
           BufferedReader input =
@@ -58,8 +61,11 @@ public class server implements Runnable {
               new DataOutputStream(connectionsocket.getOutputStream());
               Thread thread = new Thread(){
                 public void run(){
-                  System.out.println("Thread Running");
-                  http_handler(input, output); //this is where the thread should handle
+                    while(running){
+                      System.out.println("Thread Running");
+                      http_handler(input, output); //this is where the thread should handle
+                    }
+                    return;
                 }
               };
               thread.start();
@@ -68,97 +74,105 @@ public class server implements Runnable {
               System.out.println("Number of threads: "+serverThreads.size());
             }
           } catch (Exception e) {
-          s("\nError:" + e.getMessage());
+            s("\nError:" + e.getMessage());
+            //running = false;
           }
         }
+        // // exited while loop - need to close the socket
+        // try {
+        //   serversocket.close();
+        // } catch (IOException e){
+        //   // handle error
+        // }
       }
 
     public server(int listen_port) {
       this.port = listen_port;
+      this.serversocket = null;
     }
 
     /** Method to handle HTTP requests */
     private void http_handler(BufferedReader input, DataOutputStream output) {
-      int method = 0; //1 get, 2 head, 0 not supported
-      String http = new String(); //a bunch of strings to hold
-      String path = new String(); //the various things, what http v, what path,
-      String file = new String(); //what file
-      String user_agent = new String(); //what user_agent
-      BufferedReader input2 = null;
-      try {
-        Random r= new Random();
-        int newPortNumber = r.nextInt()%10000 + 40000;
-        System.out.println("random port number: "+newPortNumber);
-        output.writeUTF("newportnumber: "+newPortNumber);
-        output.flush();
-        output.close();
-        System.out.println("random port sent to client: "+newPortNumber);
-        ServerSocket serversocket2 = new ServerSocket(newPortNumber);
-        DataOutputStream output2 =null;
+        int method = 0; //1 get, 2 head, 0 not supported
+        String http = new String(); //a bunch of strings to hold
+        String path = new String(); //the various things, what http v, what path,
+        String file = new String(); //what file
+        String user_agent = new String(); //what user_agent
+        BufferedReader input2 = null;
         try {
-          Socket connectionsocket2 = serversocket2.accept();
-          InetAddress client = connectionsocket2.getInetAddress();
-          s(client.getHostName() + " connected to server.\n");
-          input2 = new BufferedReader(new InputStreamReader(connectionsocket2.getInputStream()));
-          output2 = new DataOutputStream(connectionsocket2.getOutputStream());
-        //http_handler(input, output);
-        } catch(Exception e){
+          Random r= new Random();
+          int newPortNumber = r.nextInt()%10000 + 40000;
+          System.out.println("random port number: "+newPortNumber);
+          output.writeUTF("newportnumber: "+newPortNumber);
+          output.flush();
+          output.close();
+          System.out.println("random port sent to client: "+newPortNumber);
+          ServerSocket serversocket2 = new ServerSocket(newPortNumber);
+          DataOutputStream output2 =null;
+          try {
+            Socket connectionsocket2 = serversocket2.accept();
+            InetAddress client = connectionsocket2.getInetAddress();
+            s(client.getHostName() + " connected to server.\n");
+            input2 = new BufferedReader(new InputStreamReader(connectionsocket2.getInputStream()));
+            output2 = new DataOutputStream(connectionsocket2.getOutputStream());
+          //http_handler(input, output);
+          } catch(Exception e){
+              e.printStackTrace();
+          }
+
+          //This is the two types of request we can handle
+          //GET /index.html HTTP/1.0
+          //HEAD /index.html HTTP/1.0
+          String tmp = input2.readLine(); //read from the stream
+          System.out.println("read: "+tmp);
+          String tmp2 = new String(tmp);
+          tmp.toUpperCase(); //convert it to uppercase
+          if (tmp.startsWith("GET")) { //compare it is it GET
+            method = 1;
+            System.out.println("method1");
+          } //if we set it to method 1
+          if (tmp.startsWith("HEAD")) { //same here is it HEAD
+            method = 2;
+          } //set method to 2
+          int start = 0;
+          int end = 0;
+          for (int a = 0; a < tmp2.length(); a++) {
+            if (tmp2.charAt(a) == ' ' && start != 0) {
+              end = a;
+              break;
+            }
+            if (tmp2.charAt(a) == ' ' && start == 0) {
+              start = a;
+            }
+          }
+
+          // code to synchronize the file access
+          path = tmp2.substring(start+2, end); //fill in the path
+          System.out.println("path: " + path);
+          SharedFile needed = null;
+
+          System.out.println(files.size());
+
+          if(files.size() > 0){                              // Case 1: If there are files in the SharedFile arrayList
+            for(int i = 0; i < files.size(); i++){           // loop through file using i
+                if(files.get(i).getPathName().equals(path)){ // if the path is equal to the path requested
+                  needed = files.get(i);                     // set needed (SharedFile) to be the file i
+
+                  break;                                     // exit the for loop
+                } else if(i == files.size()-1){              // Case 1.5: Reach the end of the files arrayList and the requested file was not found (not added yet)
+                  needed = new SharedFile(new File(path));   // create a new SharedFile
+                  files.add(needed);                         // add the new SharedFile to our list of all the files
+                }
+              }
+          } else {                                           // Case 2: Ther are no files in the SharedFile arrayList
+            needed = new SharedFile(new File(path));         // create a new SharedFile
+            files.add(needed);                               // add the new SharedFile to our list of all the files
+          }
+          needed.process(this, output2);                     // call the process function from SharedFile;
+          //outpu.writeUTF("newportnumber:");
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
-        //This is the two types of request we can handle
-        //GET /index.html HTTP/1.0
-        //HEAD /index.html HTTP/1.0
-        String tmp = input2.readLine(); //read from the stream
-        System.out.println("read: "+tmp);
-        String tmp2 = new String(tmp);
-        tmp.toUpperCase(); //convert it to uppercase
-        if (tmp.startsWith("GET")) { //compare it is it GET
-          method = 1;
-          System.out.println("method1");
-        } //if we set it to method 1
-        if (tmp.startsWith("HEAD")) { //same here is it HEAD
-          method = 2;
-        } //set method to 2
-        int start = 0;
-        int end = 0;
-        for (int a = 0; a < tmp2.length(); a++) {
-          if (tmp2.charAt(a) == ' ' && start != 0) {
-            end = a;
-            break;
-          }
-          if (tmp2.charAt(a) == ' ' && start == 0) {
-            start = a;
-          }
-        }
-
-        // code to synchronize the file access
-        path = tmp2.substring(start+2, end); //fill in the path
-        System.out.println("path: " + path);
-        SharedFile needed = null;
-
-        System.out.println(files.size());
-
-        if(files.size() > 0){                              // Case 1: If there are files in the SharedFile arrayList
-          for(int i = 0; i < files.size(); i++){           // loop through file using i
-              if(files.get(i).getPathName().equals(path)){ // if the path is equal to the path requested
-                needed = files.get(i);                     // set needed (SharedFile) to be the file i
-
-                break;                                     // exit the for loop
-              } else if(i == files.size()-1){              // Case 1.5: Reach the end of the files arrayList and the requested file was not found (not added yet)
-                needed = new SharedFile(new File(path));   // create a new SharedFile
-                files.add(needed);                         // add the new SharedFile to our list of all the files
-              }
-            }
-        } else {                                           // Case 2: Ther are no files in the SharedFile arrayList
-          needed = new SharedFile(new File(path));         // create a new SharedFile
-          files.add(needed);                               // add the new SharedFile to our list of all the files
-        }
-        needed.process(this, output2);                     // call the process function from SharedFile;
-        //outpu.writeUTF("newportnumber:");
-      } catch (Exception e) {
-          e.printStackTrace();
-      }
   }
 
   /** Method to mimic reply HTTP response */
@@ -221,7 +235,7 @@ public class server implements Runnable {
       }
       output2.writeUTF("\nrequested file name :"+path);
       //output2.writeUTF("hello world");
-      Thread.sleep(10000);                                          // had the thread sleep to test synchronization
+      //Thread.sleep(10000);                                          // had the thread sleep to test synchronization
       output2.close();
       br.close();
       s("closing file " + path.getName());
@@ -230,18 +244,33 @@ public class server implements Runnable {
     }
   }
   /** Method to close out of all active server threads */
-  public void closeThreads(){
-    //try {
+  public void closeThreads(Thread adminThread){
     synchronized(serverThreads){
         for (Thread t: serverThreads){
-          t.interrupt();
+          System.out.println("We are interrupting!");
+          if (t != adminThread){ // if the looping thread is not equal to the adminThread
+            t.interrupt();
+            running = false;
+            try {
+              t.join(); // wait for the thread to finish execution, then terminate
+            } catch (InterruptedException e) {
+              running = false;
+              return;
+            }
+          }
+          continue;
+        }
+        // when it get's to the end, the only remaining thread should be the adminThread
+        Thread t = Thread.currentThread();
+        t.interrupt();
+        running = false;
+        try {
+          t.join(); // wait for the thread to finish execution, then terminate
+        } catch (InterruptedException e) {
+          running = false;
+          return;
         }
       }
-      Thread.currentThread().interrupt();
-      return;
-    //} catch (InterruptedException e){
-      // handle error here
-    //}
   }
 
   /** Method to list all active server threads */
@@ -255,16 +284,21 @@ public class server implements Runnable {
       System.out.println("Number of threads: "+serverThreads.size());
       if (serverThreads.size() > 0){
         for (int i = 0; i < serverThreads.size(); i++){
-          System.out.println(serverThreads.get(i));
+          System.out.println(serverThreads.get(i).getState());
         }
       }
     }
   }
 
+  // public void closeSocket(){
+  //   try {
+  //       this.serversocket.close(); // problem: not closing out of every socket connection
+  //   } catch (IOException e){
+  //     // handle error?
+  //   }
+  // }
+
   // Problems:
-  // Server threads are not being added to the arrayList
-  // --> when trying to loop through to print them out, unable to
-  // --> when trying to end the threads by looping, unable to
   // May need to provide some sort of handling mechanism for interrupts
 
 }
