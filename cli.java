@@ -31,8 +31,8 @@ class cli extends Thread{
 
                 // starting up the server
                 if (command.equals("start")){
-                    server = new server(1234);
-                    this.adminThread = (new Thread(new server(1234)));
+                    //server = new server(1234);
+                    this.adminThread = (new Thread(this.server));
                     adminThread.start();
                     //System.out.println("Is this working?");
                 } // closing out of the if

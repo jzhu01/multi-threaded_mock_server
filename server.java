@@ -63,8 +63,10 @@ public class server implements Runnable {
                 }
               };
               thread.start();
-              serverThreads.add(thread);  // add to list of server threads for deletion later on in case of shutdown
+              synchronized(serverThreads){
+                serverThreads.add(thread);  // add to list of server threads for deletion later on in case of shutdown
               System.out.println("Number of threads: "+serverThreads.size());
+            }
           } catch (Exception e) {
           s("\nError:" + e.getMessage());
           }
@@ -230,8 +232,10 @@ public class server implements Runnable {
   /** Method to close out of all active server threads */
   public void closeThreads(){
     //try {
-      for (Thread t: serverThreads){
-        t.interrupt();
+    synchronized(serverThreads){
+        for (Thread t: serverThreads){
+          t.interrupt();
+        }
       }
       Thread.currentThread().interrupt();
       return;
@@ -247,10 +251,12 @@ public class server implements Runnable {
     //   System.out.println("Thread looped!");
     //   System.out.println("Thread: "+t.getName());
     // }
-    System.out.println("Number of threads: "+serverThreads.size());
-    if (serverThreads.size() > 0){
-      for (int i = 0; i < serverThreads.size(); i++){
-        System.out.println(serverThreads.get(i));
+    synchronized(serverThreads){
+      System.out.println("Number of threads: "+serverThreads.size());
+      if (serverThreads.size() > 0){
+        for (int i = 0; i < serverThreads.size(); i++){
+          System.out.println(serverThreads.get(i));
+        }
       }
     }
   }
