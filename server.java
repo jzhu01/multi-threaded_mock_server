@@ -13,11 +13,8 @@ import java.util.concurrent.Semaphore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
-<<<<<<< HEAD
 import java.util.concurrent.atomic.AtomicInteger;
-=======
 import java.io.IOException;
->>>>>>> a489f037ed9dd2a4c5859854c746cadfd55a6d8a
 
 /**
  * Operating Systems Final Project
@@ -56,24 +53,20 @@ public class server implements Runnable {
 
 
     public void run(){
-<<<<<<< HEAD
 
       //ServerSocket serversocket = null;
       try {
         s("Trying to bind to localhost on port " + Integer.toString(this.port) + "...");
         this.serverSocket = new ServerSocket(this.port);
-=======
       //ServerSocket serversocket = null;
       try {
         s("Trying to bind to localhost on port " + Integer.toString(this.port) + "...");
         this.serversocket = new ServerSocket(this.port);
         running = true;
->>>>>>> a489f037ed9dd2a4c5859854c746cadfd55a6d8a
       } catch (Exception e) { //catch any errors and print errors to gui
         s("\nFatal Error:" + e.getMessage());
         return;
       }
-<<<<<<< HEAD
       while(this.running) {
 
         //System.out.println("this.running: " + this.running);
@@ -117,7 +110,6 @@ public class server implements Runnable {
             //}
           } catch (Exception e) {
            s("\nError:" + e.getMessage());
-=======
       while (running) {
         s("\nReady, Waiting for requests...\n");
         try {
@@ -146,7 +138,6 @@ public class server implements Runnable {
           } catch (Exception e) {
             s("\nError:" + e.getMessage());
             //running = false;
->>>>>>> a489f037ed9dd2a4c5859854c746cadfd55a6d8a
           }
         }
         // // exited while loop - need to close the socket
@@ -159,11 +150,8 @@ public class server implements Runnable {
 
     public server(int listen_port) {
       this.port = listen_port;
-<<<<<<< HEAD
       this.running = true;
-=======
       this.serversocket = null;
->>>>>>> a489f037ed9dd2a4c5859854c746cadfd55a6d8a
     }
 
     /** Method to handle HTTP requests */
@@ -347,7 +335,7 @@ public class server implements Runnable {
         //   return;
         // }
       }
-<<<<<<< HEAD
+
       serverThreads = new ArrayList<Thread>();
       this.running = false;
       runningInt.incrementAndGet();
@@ -356,8 +344,6 @@ public class server implements Runnable {
     //} catch (InterruptedException e){
       // handle error here
     //}
-=======
->>>>>>> a489f037ed9dd2a4c5859854c746cadfd55a6d8a
   }
 
   public ServerSocket getServerSocket(){
