@@ -173,6 +173,7 @@ public class server implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        running = false;
   }
 
   /** Method to mimic reply HTTP response */
@@ -261,15 +262,15 @@ public class server implements Runnable {
           continue;
         }
         // when it get's to the end, the only remaining thread should be the adminThread
-        Thread t = Thread.currentThread();
-        t.interrupt();
-        running = false;
-        try {
-          t.join(); // wait for the thread to finish execution, then terminate
-        } catch (InterruptedException e) {
-          running = false;
-          return;
-        }
+        // Thread t = Thread.currentThread();
+        // t.interrupt();
+        // running = false;
+        // try {
+        //   t.join(); // wait for the thread to finish execution, then terminate
+        // } catch (InterruptedException e) {
+        //   running = false;
+        //   return;
+        // }
       }
   }
 
