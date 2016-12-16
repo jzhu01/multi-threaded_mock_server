@@ -2,6 +2,8 @@ import java.util.Scanner;
 import java.util.StringTokenizer;
 import java.util.Date;
 import java.util.Random;
+import java.io.IOException;
+
 /*
  * Operating Systems Final Project
  * @author Sadi Evren Seker, Jen Zhu, Sabrina Sayasith
@@ -41,6 +43,7 @@ class cli extends Thread{
                 if(command.equals("shutdown")){
                   // code to close the server and all running threads
                   System.out.println("Preparing to shutdown...");
+<<<<<<< HEAD
                   this.server.closeThreads();
                   this.server.stopRunning();
                   try{
@@ -49,11 +52,26 @@ class cli extends Thread{
                   catch(Exception e){
                     System.out.println("Problem closing server socket");
                   }
+=======
+                  server.closeThreads(adminThread);
+                  try {
+                    server.serversocket.close();
+                  } catch (IOException e){
+                    // handle error
+                    System.out.println("Socket successfully closed.");
+                  }
+                  System.out.println("Finished closing everything.");
+>>>>>>> a489f037ed9dd2a4c5859854c746cadfd55a6d8a
                   //adminThread.interrupt();
                 }
                 if(command.equals("ls")){
                   System.out.println("Some Thread Info:");
                   server.listThreads();
+                }
+                if (command.equals("quit")){
+                  System.out.println("Exiting the command line interface.");
+                  System.out.println("Goodbye!");
+                  System.exit(0);
                 }
         }
     }
