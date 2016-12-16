@@ -13,6 +13,7 @@ import java.util.concurrent.Semaphore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Operating Systems Final Project
@@ -22,8 +23,11 @@ import java.util.Collections;
 
 public class server implements Runnable {
     private int port;
+    ServerSocket serverSocket;
     ArrayList<SharedFile> files = new ArrayList<SharedFile>();
     List<Thread> serverThreads = Collections.synchronizedList(new ArrayList<Thread>());
+    private Boolean running;
+    AtomicInteger runningInt = new AtomicInteger();
     //List<Thread> serverThreads = new ArrayList<Thread>();
 
     public static void main(String args[]){
@@ -31,50 +35,80 @@ public class server implements Runnable {
         s1.run();
     }
 
+
     private void s(String s2) { //an alias to avoid typing so much!
       System.out.println(s2);
     }
 
+    public void stopRunning(){
+      //System.exit(0);
+      //Thread.currentThread().interrupt();
+      //this.running = false;
+      //System.out.println("Stop running");
+      return;
+    }
+
+
     public void run(){
 
-      ServerSocket serversocket = null;
+      //ServerSocket serversocket = null;
       try {
         s("Trying to bind to localhost on port " + Integer.toString(this.port) + "...");
-        serversocket = new ServerSocket(this.port);
+        this.serverSocket = new ServerSocket(this.port);
       } catch (Exception e) { //catch any errors and print errors to gui
         s("\nFatal Error:" + e.getMessage());
         return;
       }
-      while (true) {
+      while(this.running) {
+
+        //System.out.println("this.running: " + this.running);
         s("\nReady, Waiting for requests...\n");
         try {
-          Socket connectionsocket = serversocket.accept();
-          InetAddress client = connectionsocket.getInetAddress();
-          s(client.getHostName() + " connected to server.\n");
-          BufferedReader input =
-              new BufferedReader(new InputStreamReader(connectionsocket.
-              getInputStream()));
-          DataOutputStream output =
-              new DataOutputStream(connectionsocket.getOutputStream());
-              Thread thread = new Thread(){
-                public void run(){
-                  System.out.println("Thread Running");
-                  http_handler(input, output); //this is where the thread should handle
-                }
-              };
-              thread.start();
-              synchronized(serverThreads){
-                serverThreads.add(thread);  // add to list of server threads for deletion later on in case of shutdown
-              System.out.println("Number of threads: "+serverThreads.size());
-            }
+          /*if(this.running == false){
+            //System.exit(0);
+            //break;
+            serversocket.close();
+            serversocket = null;
+            return;
+          }*/
+          //else{
+            Socket connectionsocket = this.serverSocket.accept();
+            InetAddress client = connectionsocket.getInetAddress();
+            s(client.getHostName() + " connected to server.\n");
+            /*if(this.running == false){
+            //System.exit(0);
+              //break;
+              serversocket.close();
+              serversocket = null;
+              return;
+            }*/
+            BufferedReader input =
+                new BufferedReader(new InputStreamReader(connectionsocket.
+                getInputStream()));
+            DataOutputStream output =
+                new DataOutputStream(connectionsocket.getOutputStream());
+                Thread thread = new Thread(){
+                  public void run(){
+                    System.out.println("Thread Running");
+                    http_handler(input, output); //this is where the thread should handle
+                  }
+                };
+                thread.start();
+                synchronized(serverThreads){
+                  serverThreads.add(thread);  // add to list of server threads for deletion later on in case of shutdown
+                System.out.println("Number of threads: "+serverThreads.size());
+                //System.out.println("this.running: " + this.running);
+              }
+            //}
           } catch (Exception e) {
-          s("\nError:" + e.getMessage());
+           s("\nError:" + e.getMessage());
           }
         }
       }
 
     public server(int listen_port) {
       this.port = listen_port;
+      this.running = true;
     }
 
     /** Method to handle HTTP requests */
@@ -221,7 +255,7 @@ public class server implements Runnable {
       }
       output2.writeUTF("\nrequested file name :"+path);
       //output2.writeUTF("hello world");
-      Thread.sleep(10000);                                          // had the thread sleep to test synchronization
+      //Thread.sleep(10000);                                          // had the thread sleep to test synchronization
       output2.close();
       br.close();
       s("closing file " + path.getName());
@@ -237,11 +271,18 @@ public class server implements Runnable {
           t.interrupt();
         }
       }
+      serverThreads = new ArrayList<Thread>();
+      this.running = false;
+      runningInt.incrementAndGet();
       Thread.currentThread().interrupt();
       return;
     //} catch (InterruptedException e){
       // handle error here
     //}
+  }
+
+  public ServerSocket getServerSocket(){
+    return this.serverSocket;
   }
 
   /** Method to list all active server threads */
@@ -255,7 +296,7 @@ public class server implements Runnable {
       System.out.println("Number of threads: "+serverThreads.size());
       if (serverThreads.size() > 0){
         for (int i = 0; i < serverThreads.size(); i++){
-          System.out.println(serverThreads.get(i));
+          System.out.println(serverThreads.get(i).getState());
         }
       }
     }

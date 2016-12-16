@@ -13,8 +13,9 @@ import java.util.Random;
 class cli extends Thread{
     server server;
     Thread adminThread;
-    public cli(server s1){
-      this.server = s1;
+    Boolean running;
+    public cli(){
+      //this.server = s1;
       this.adminThread = null;
     }
     public void run(){
@@ -32,6 +33,7 @@ class cli extends Thread{
                 // starting up the server
                 if (command.equals("start")){
                     //server = new server(1234);
+                    this.server = new server(1234);
                     this.adminThread = (new Thread(this.server));
                     adminThread.start();
                     //System.out.println("Is this working?");
@@ -39,8 +41,15 @@ class cli extends Thread{
                 if(command.equals("shutdown")){
                   // code to close the server and all running threads
                   System.out.println("Preparing to shutdown...");
-                  server.closeThreads();
-                  adminThread.interrupt();
+                  this.server.closeThreads();
+                  this.server.stopRunning();
+                  try{
+                   server.getServerSocket().close();
+                  }
+                  catch(Exception e){
+                    System.out.println("Problem closing server socket");
+                  }
+                  //adminThread.interrupt();
                 }
                 if(command.equals("ls")){
                   System.out.println("Some Thread Info:");
@@ -50,7 +59,7 @@ class cli extends Thread{
     }
     public static void main(String[] args){
       server s1 = new server(1234);
-      cli c1 = new cli(s1);
+      cli c1 = new cli();
       c1.run();
     }
 }
